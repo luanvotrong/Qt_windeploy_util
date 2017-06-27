@@ -104,7 +104,11 @@ namespace qmldeploy
 
             if(command.Length > 0)
             {
-                Process.Start("CMD.exe", command);
+                Process p = new Process();
+                // Redirect the output stream of the child process. 
+                p.StartInfo.FileName = "cmd.exe";
+                p.StartInfo.Arguments = "/c " + command;
+                p.Start();
             }
 
             Console.Read();
