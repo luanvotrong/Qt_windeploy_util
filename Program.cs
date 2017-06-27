@@ -46,9 +46,9 @@ namespace qmldeploy
             return optionsmap;
         }
 
-        static public string GenerateCommand(Dictionary<string, string> options)
+        static public Dictionary<string, string> GenerateCommand(Dictionary<string, string> options)
         {
-            string res = "";
+            Dictionary<string, string> res = new Dictionary<string, string>();
 
             if(options.ContainsKey("--help"))
             {
@@ -66,9 +66,11 @@ namespace qmldeploy
                 throw new Exception("Incomplete command");
             }
 
-            res = res + options["--bin"] + "\\windeployqt.exe" + " ";
-            res = res + "--qmldir " + options["--qml"] + " ";
-            res = res + options["--name"];
+            string command = options["--bin"] + "\\windeployqt.exe";
+            string option = " --qmldir " + options["--qml"] + " ";
+            option = option + options["--name"];
+            res.Add("command", command);
+            res.Add("option", option);
 
             return res;
         }
@@ -91,7 +93,7 @@ namespace qmldeploy
                 Utilities.PrintHelp();
             }
 
-            string command = "";
+            Dictionary<string, string> command = new Dictionary<string, string>();
             try
             {
                 command = Utilities.GenerateCommand(options);
@@ -102,12 +104,12 @@ namespace qmldeploy
                 Utilities.PrintHelp();
             }
 
-            if(command.Length > 0)
+            if(command.Count > 0)
             {
                 Process p = new Process();
                 // Redirect the output stream of the child process. 
-                p.StartInfo.FileName = "cmd.exe";
-                p.StartInfo.Arguments = "/c " + command;
+                p.StartInfo.FileName = command["command"];
+                p.StartInfo.Arguments = command["option"];
                 p.Start();
             }
 
