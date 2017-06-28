@@ -12,21 +12,16 @@ using System.Security.AccessControl;
 
 namespace qmldeploy
 {
-    class Command
-    {
-        public Dictionary<string, string> optionsmap;
-
-        public Command()
-        {
-        }
-
-        public Command(string[] args)
-        {
-        }
-    }
-
     class Utilities
     {
+        static private List<string> template_options = new List<string>
+        {
+            "--help",
+            "--bin",
+            "--qml",
+            "--name"
+        };
+
         static public void PrintHelp()
         {
             Console.WriteLine("------------HELP-------------");
@@ -53,16 +48,12 @@ namespace qmldeploy
             {
                 throw new Exception("Generate help");
             }
-            if (!options.ContainsKey("--bin"))
+            for(int i=1; i< template_options.Count; i++)
             {
-            }
-            if (!options.ContainsKey("--qml"))
-            {
-                throw new Exception("Incomplete command");
-            }
-            if (!options.ContainsKey("--name"))
-            {
-                throw new Exception("Incomplete command");
+                if(!options.ContainsKey(template_options[i]))
+                {
+                    throw new Exception("Incomplete command");
+                }
             }
 
             string command = options["--bin"] + "\\windeployqt.exe";
@@ -151,7 +142,7 @@ namespace qmldeploy
                 p.StartInfo.FileName = Directory.GetCurrentDirectory() + "\\" + options["--name"];
                 p.StartInfo.Arguments = "";
                 p.Start();
-
+                System.Threading.Thread.Sleep(1000);
                 Utilities.CleanUp(Directory.GetCurrentDirectory());
             }
 
