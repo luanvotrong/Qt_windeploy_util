@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using System.Security.AccessControl;
 
 //Options:
 //"--bin",
@@ -50,11 +49,11 @@ namespace qmldeploy
         {
             Dictionary<string, string> res = new Dictionary<string, string>();
 
-            if(options.ContainsKey("--help"))
+            if (options.ContainsKey("--help"))
             {
                 throw new Exception("Generate help");
             }
-            if(!options.ContainsKey("--bin"))
+            if (!options.ContainsKey("--bin"))
             {
             }
             if (!options.ContainsKey("--qml"))
@@ -74,12 +73,48 @@ namespace qmldeploy
 
             return res;
         }
+
+        static public void CleanUp(string path)
+        {
+            string[] dirs = Directory.GetDirectories(path);
+            foreach (string p in dirs)
+            {
+                CleanUp(p);
+                try
+                {
+                    Directory.Delete(p);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("folder using: " + p);
+                    continue; //Dirty hack
+                }
+                Console.WriteLine("Deleted folder: " + p);
+            }
+            string[] files = Directory.GetFiles(path);
+            foreach (string p in files)
+            {
+                FileInfo info = new FileInfo(p);
+                if (info.Extension.ToLower() == ".dll")
+                {
+                    try
+                    {
+                        File.Delete(p);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("file using: " + p);
+                        continue; //Dirty hack.
+                    }
+
+                    Console.WriteLine("Deleted file: " + info.Name + " " + info.Extension);
+                }
+            }
+        }
     }
 
     class Program
     {
-        static private Command command;
-
         static void Main(string[] args)
         {
             Dictionary<string, string> options = new Dictionary<string, string>();
@@ -98,19 +133,26 @@ namespace qmldeploy
             {
                 command = Utilities.GenerateCommand(options);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
                 Utilities.PrintHelp();
             }
 
-            if(command.Count > 0)
+            if (command.Count > 0)
             {
                 Process p = new Process();
                 // Redirect the output stream of the child process. 
                 p.StartInfo.FileName = command["command"];
                 p.StartInfo.Arguments = command["option"];
                 p.Start();
+                p.WaitForExit();
+
+                p.StartInfo.FileName = Directory.GetCurrentDirectory() + "\\" + options["--name"];
+                p.StartInfo.Arguments = "";
+                p.Start();
+
+                Utilities.CleanUp(Directory.GetCurrentDirectory());
             }
 
             Console.Read();
